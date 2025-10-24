@@ -1,0 +1,55 @@
+{{if .Error}}
+<div class="error">{{.Error}}</div>
+{{end}}
+
+{{if eq .Mode "create"}}
+<form hx-post="/posts" hx-target="#posts-table-body" hx-swap="afterbegin">
+    <div class="form-group">
+        <label for="title">Title *</label>
+        <input type="text" id="title" name="title" required maxlength="200" value="{{.Title}}">
+    </div>
+    <div class="form-group">
+        <label for="content">Content *</label>
+        <textarea id="content" name="content" required maxlength="10000">{{.Content}}</textarea>
+    </div>
+    <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-success">Create Post</button>
+        <button 
+            type="button" 
+            class="btn btn-secondary"
+            onclick="document.getElementById('form-container').innerHTML = ''">
+            Cancel
+        </button>
+    </div>
+</form>
+{{else if eq .Mode "edit"}}
+<tr id="post-{{.Post.ID.Hex}}">
+    <td colspan="4">
+        <form hx-put="/posts" hx-target="#post-{{.Post.ID.Hex}}" hx-swap="outerHTML">
+            <input type="hidden" name="id" value="{{.Post.ID.Hex}}">
+            {{if .Error}}
+            <div class="error">{{.Error}}</div>
+            {{end}}
+            <div class="form-group">
+                <label for="title">Title *</label>
+                <input type="text" id="title" name="title" required maxlength="200" value="{{if .Title}}{{.Title}}{{else}}{{.Post.Title}}{{end}}">
+            </div>
+            <div class="form-group">
+                <label for="content">Content *</label>
+                <textarea id="content" name="content" required maxlength="10000">{{if .Content}}{{.Content}}{{else}}{{.Post.Content}}{{end}}</textarea>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-success">Save</button>
+                <button 
+                    type="button" 
+                    class="btn btn-secondary"
+                    hx-get="/posts?page=1" 
+                    hx-target="#posts-container"
+                    hx-swap="innerHTML">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </td>
+</tr>
+{{end}}
