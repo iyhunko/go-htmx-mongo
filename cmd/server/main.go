@@ -68,6 +68,11 @@ func main() {
 
 	// Setup routes
 	mux := http.NewServeMux()
+	
+	// Serve static files
+	fs := http.FileServer(http.Dir("web/static"))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	
 	mux.HandleFunc("/", postHandler.Index)
 	mux.HandleFunc("/posts", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
