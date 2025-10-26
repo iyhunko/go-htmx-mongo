@@ -13,15 +13,17 @@ import (
 
 // PostController handles HTTP requests for posts
 type PostController struct {
-	service   *service.PostService
-	templates *template.Template
+	service       *service.PostService
+	templates     *template.Template
+	pageSizeLimit int
 }
 
 // NewPostController creates a new post controller
-func NewPostController(service *service.PostService, templates *template.Template) *PostController {
+func NewPostController(service *service.PostService, templates *template.Template, pageSizeLimit int) *PostController {
 	return &PostController{
-		service:   service,
-		templates: templates,
+		service:       service,
+		templates:     templates,
+		pageSizeLimit: pageSizeLimit,
 	}
 }
 
@@ -35,7 +37,7 @@ func (c *PostController) Index(ctx *gin.Context) {
 	}
 
 	search := ctx.Query("search")
-	pageSize := 10
+	pageSize := c.pageSizeLimit
 
 	var posts []*domain.Post
 	var totalPages int
@@ -76,7 +78,7 @@ func (c *PostController) PostsList(ctx *gin.Context) {
 	}
 
 	search := ctx.Query("search")
-	pageSize := 10
+	pageSize := c.pageSizeLimit
 
 	var posts []*domain.Post
 	var totalPages int
@@ -250,7 +252,7 @@ func (c *PostController) UpdatePost(ctx *gin.Context) {
 
 // DeletePost handles post deletion
 func (c *PostController) DeletePost(ctx *gin.Context) {
-	id := ctx.Query("id")
+	id := ctx.Param("id")
 	if id == "" {
 		slog.Warn("Post ID required but not provided for deletion")
 		ctx.HTML(http.StatusBadRequest, "error.html", gin.H{"Error": "Post ID required"})
