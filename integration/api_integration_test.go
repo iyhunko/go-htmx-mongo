@@ -60,8 +60,13 @@ func setupTestServer(t *testing.T) (*gin.Engine, *dockertest.Pool, *dockertest.R
 	if err != nil {
 		t.Fatalf("Failed to find project root: %v", err)
 	}
-	originalDir, _ := os.Getwd()
-	os.Chdir(projectRoot)
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current directory: %v", err)
+	}
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Fatalf("Failed to change to project root: %v", err)
+	}
 	defer os.Chdir(originalDir)
 
 	// Setup MongoDB
