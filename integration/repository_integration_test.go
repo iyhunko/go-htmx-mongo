@@ -1,4 +1,4 @@
-package repository
+package integration
 
 import (
 	"context"
@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iyhunko/go-htmx-mongo/internal/domain"
+	"github.com/iyhunko/go-htmx-mongo/internal/model"
+	"github.com/iyhunko/go-htmx-mongo/internal/repository"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -84,10 +85,10 @@ func TestIntegrationMongoPostRepository_Create(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
-	post := domain.NewPost("Test Title", "Test Content")
+	post := model.NewPost("Test Title", "Test Content")
 
 	err := repo.Create(ctx, post)
 	if err != nil {
@@ -115,11 +116,11 @@ func TestIntegrationMongoPostRepository_FindByID(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create a post
-	post := domain.NewPost("Test Title", "Test Content")
+	post := model.NewPost("Test Title", "Test Content")
 	if err := repo.Create(ctx, post); err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
@@ -151,12 +152,12 @@ func TestIntegrationMongoPostRepository_FindByID_NotFound(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	_, err := repo.FindByID(ctx, "507f1f77bcf86cd799439011")
-	if err != ErrPostNotFound {
-		t.Errorf("FindByID() error = %v, want %v", err, ErrPostNotFound)
+	if err != repository.ErrPostNotFound {
+		t.Errorf("FindByID() error = %v, want %v", err, repository.ErrPostNotFound)
 	}
 }
 
@@ -168,12 +169,12 @@ func TestIntegrationMongoPostRepository_FindAll(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create multiple posts
 	for i := 1; i <= 15; i++ {
-		post := domain.NewPost(fmt.Sprintf("Title %d", i), fmt.Sprintf("Content %d", i))
+		post := model.NewPost(fmt.Sprintf("Title %d", i), fmt.Sprintf("Content %d", i))
 		if err := repo.Create(ctx, post); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}
@@ -210,7 +211,7 @@ func TestIntegrationMongoPostRepository_Search(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create posts with different content
@@ -224,7 +225,7 @@ func TestIntegrationMongoPostRepository_Search(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		post := domain.NewPost(tc.title, tc.content)
+		post := model.NewPost(tc.title, tc.content)
 		if err := repo.Create(ctx, post); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}
@@ -259,11 +260,11 @@ func TestIntegrationMongoPostRepository_Update(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create a post
-	post := domain.NewPost("Original Title", "Original Content")
+	post := model.NewPost("Original Title", "Original Content")
 	if err := repo.Create(ctx, post); err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
@@ -297,11 +298,11 @@ func TestIntegrationMongoPostRepository_Delete(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create a post
-	post := domain.NewPost("Test Title", "Test Content")
+	post := model.NewPost("Test Title", "Test Content")
 	if err := repo.Create(ctx, post); err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
@@ -313,7 +314,7 @@ func TestIntegrationMongoPostRepository_Delete(t *testing.T) {
 
 	// Verify deletion
 	_, err := repo.FindByID(ctx, post.ID.Hex())
-	if err != ErrPostNotFound {
+	if err != repository.ErrPostNotFound {
 		t.Errorf("Delete() post still exists")
 	}
 }
@@ -326,12 +327,12 @@ func TestIntegrationMongoPostRepository_Count(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create posts
 	for i := 1; i <= 5; i++ {
-		post := domain.NewPost(fmt.Sprintf("Title %d", i), fmt.Sprintf("Content %d", i))
+		post := model.NewPost(fmt.Sprintf("Title %d", i), fmt.Sprintf("Content %d", i))
 		if err := repo.Create(ctx, post); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}
@@ -355,7 +356,7 @@ func TestIntegrationMongoPostRepository_CountSearch(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create posts
@@ -369,7 +370,7 @@ func TestIntegrationMongoPostRepository_CountSearch(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		post := domain.NewPost(tc.title, tc.content)
+		post := model.NewPost(tc.title, tc.content)
 		if err := repo.Create(ctx, post); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}

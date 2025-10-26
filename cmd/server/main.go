@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
@@ -21,19 +22,33 @@ import (
 )
 
 func main() {
-	// Initialize structured logger
+	initLogger()
+	slog.Info("Starting application")
+
+	cfg := config.Load()
+	slog.Info("Configuration loaded", "serverPort", cfg.HttpServerPort, "database", cfg.MongoDBDatabase)
+
+	mongodb := connectDatabase(cfg)
+	defer disconnectDatabase(mongodb)
+
+	postController := initializeController(mongodb, cfg)
+	router := setupRouter(postController)
+	server := createServer(cfg, router)
+
+	startServer(server, cfg)
+	waitForShutdown(server)
+}
+
+// initLogger initializes the structured logger
+func initLogger() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
 	slog.SetDefault(logger)
+}
 
-	slog.Info("Starting application")
-
-	// Load configuration
-	cfg := config.Load()
-	slog.Info("Configuration loaded", "serverPort", cfg.HttpServerPort, "database", cfg.MongoDBDatabase)
-
-	// Connect to MongoDB with auto-migration
+// connectDatabase establishes a connection to MongoDB
+func connectDatabase(cfg *config.Config) *db.MongoDB {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -42,45 +57,59 @@ func main() {
 		slog.Error("Failed to connect to database", "error", err)
 		os.Exit(1)
 	}
-	defer func() {
-		if err := mongodb.Disconnect(context.Background()); err != nil {
-			slog.Error("Error disconnecting from MongoDB", "error", err)
-		}
-	}()
+	return mongodb
+}
 
-	// Initialize layers
+// disconnectDatabase closes the database connection
+func disconnectDatabase(mongodb *db.MongoDB) {
+	if err := mongodb.Disconnect(context.Background()); err != nil {
+		slog.Error("Error disconnecting from MongoDB", "error", err)
+	}
+}
+
+// initializeController initializes all application layers
+func initializeController(mongodb *db.MongoDB, cfg *config.Config) *controller.PostController {
 	postRepo := repository.NewMongoPostRepository(mongodb.DB)
 	postService := service.NewPostService(postRepo)
 
-	// Load templates with custom functions
+	templates := loadTemplates()
+	return controller.NewPostController(postService, templates, cfg)
+}
+
+// loadTemplates loads HTML templates
+func loadTemplates() *template.Template {
 	templates, err := web.LoadTemplates()
 	if err != nil {
 		slog.Error("Failed to load templates", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("Templates loaded successfully")
+	return templates
+}
 
-	postController := controller.NewPostController(postService, templates, cfg)
-
-	// Setup Gin router
+// setupRouter configures the Gin router with middleware and routes
+func setupRouter(postController *controller.PostController) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(middleware.Logger())
-
-	// Setup routes
 	httproutes.SetupRoutes(router, postController)
+	return router
+}
 
-	// Create server
-	server := &http.Server{
+// createServer creates an HTTP server with appropriate timeouts
+func createServer(cfg *config.Config, handler http.Handler) *http.Server {
+	return &http.Server{
 		Addr:         cfg.GetServerAddress(),
-		Handler:      router,
+		Handler:      handler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
+}
 
-	// Start server in a goroutine
+// startServer starts the HTTP server in a goroutine
+func startServer(server *http.Server, cfg *config.Config) {
 	go func() {
 		slog.Info("Server starting", "port", cfg.HttpServerPort)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -88,15 +117,16 @@ func main() {
 			os.Exit(1)
 		}
 	}()
+}
 
-	// Wait for interrupt signal to gracefully shutdown the server
+// waitForShutdown waits for interrupt signal and performs graceful shutdown
+func waitForShutdown(server *http.Server) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	slog.Info("Shutting down server...")
 
-	// Graceful shutdown with timeout
-	ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {

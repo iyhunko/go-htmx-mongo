@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/iyhunko/go-htmx-mongo/internal/domain"
+	"github.com/iyhunko/go-htmx-mongo/internal/model"
+	"github.com/iyhunko/go-htmx-mongo/internal/repository"
 )
 
 var (
@@ -15,11 +16,11 @@ var (
 
 // PostService handles business logic for posts
 type PostService struct {
-	repo domain.PostRepository
+	repo repository.PostRepository
 }
 
 // NewPostService creates a new post service
-func NewPostService(repo domain.PostRepository) *PostService {
+func NewPostService(repo repository.PostRepository) *PostService {
 	return &PostService{
 		repo: repo,
 	}
@@ -28,8 +29,8 @@ func NewPostService(repo domain.PostRepository) *PostService {
 // CreatePost creates a new post with the provided title and content.
 // It validates the post before saving it to the repository.
 // Returns the created post or an error if validation or creation fails.
-func (s *PostService) CreatePost(ctx context.Context, title, content string) (*domain.Post, error) {
-	post := domain.NewPost(title, content)
+func (s *PostService) CreatePost(ctx context.Context, title, content string) (*model.Post, error) {
+	post := model.NewPost(title, content)
 
 	if err := post.Validate(); err != nil {
 		return nil, err
@@ -44,7 +45,7 @@ func (s *PostService) CreatePost(ctx context.Context, title, content string) (*d
 
 // GetPost retrieves a post by its ID.
 // Returns the post if found, or an error if the post doesn't exist or the ID is invalid.
-func (s *PostService) GetPost(ctx context.Context, id string) (*domain.Post, error) {
+func (s *PostService) GetPost(ctx context.Context, id string) (*model.Post, error) {
 	post, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -56,7 +57,7 @@ func (s *PostService) GetPost(ctx context.Context, id string) (*domain.Post, err
 // It returns posts for the requested page, the total number of pages, and an error if any.
 // Page numbers start at 1, and invalid values are adjusted to defaults (page=1, pageSize=10).
 // Maximum page size is capped at 100.
-func (s *PostService) GetPosts(ctx context.Context, page, pageSize int) ([]*domain.Post, int, error) {
+func (s *PostService) GetPosts(ctx context.Context, page, pageSize int) ([]*model.Post, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -91,7 +92,7 @@ func (s *PostService) GetPosts(ctx context.Context, page, pageSize int) ([]*doma
 // It returns matching posts for the requested page, the total number of pages, and an error if any.
 // Page numbers start at 1, and invalid values are adjusted to defaults (page=1, pageSize=10).
 // Maximum page size is capped at 100.
-func (s *PostService) SearchPosts(ctx context.Context, query string, page, pageSize int) ([]*domain.Post, int, error) {
+func (s *PostService) SearchPosts(ctx context.Context, query string, page, pageSize int) ([]*model.Post, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -125,7 +126,7 @@ func (s *PostService) SearchPosts(ctx context.Context, query string, page, pageS
 // UpdatePost updates an existing post with new title and content.
 // It retrieves the post, updates it, validates it, and saves it back to the repository.
 // Returns the updated post or an error if the post is not found or validation fails.
-func (s *PostService) UpdatePost(ctx context.Context, id, title, content string) (*domain.Post, error) {
+func (s *PostService) UpdatePost(ctx context.Context, id, title, content string) (*model.Post, error) {
 	post, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err

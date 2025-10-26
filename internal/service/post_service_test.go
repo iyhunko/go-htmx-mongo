@@ -5,50 +5,50 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/iyhunko/go-htmx-mongo/internal/domain"
+	"github.com/iyhunko/go-htmx-mongo/internal/model"
 )
 
 // mockPostRepository is a mock implementation for testing
 type mockPostRepository struct {
-	createFunc      func(ctx context.Context, post *domain.Post) error
-	findByIDFunc    func(ctx context.Context, id string) (*domain.Post, error)
-	findAllFunc     func(ctx context.Context, limit, offset int) ([]*domain.Post, error)
-	searchFunc      func(ctx context.Context, query string, limit, offset int) ([]*domain.Post, error)
-	updateFunc      func(ctx context.Context, post *domain.Post) error
+	createFunc      func(ctx context.Context, post *model.Post) error
+	findByIDFunc    func(ctx context.Context, id string) (*model.Post, error)
+	findAllFunc     func(ctx context.Context, limit, offset int) ([]*model.Post, error)
+	searchFunc      func(ctx context.Context, query string, limit, offset int) ([]*model.Post, error)
+	updateFunc      func(ctx context.Context, post *model.Post) error
 	deleteFunc      func(ctx context.Context, id string) error
 	countFunc       func(ctx context.Context) (int64, error)
 	countSearchFunc func(ctx context.Context, query string) (int64, error)
 }
 
-func (m *mockPostRepository) Create(ctx context.Context, post *domain.Post) error {
+func (m *mockPostRepository) Create(ctx context.Context, post *model.Post) error {
 	if m.createFunc != nil {
 		return m.createFunc(ctx, post)
 	}
 	return nil
 }
 
-func (m *mockPostRepository) FindByID(ctx context.Context, id string) (*domain.Post, error) {
+func (m *mockPostRepository) FindByID(ctx context.Context, id string) (*model.Post, error) {
 	if m.findByIDFunc != nil {
 		return m.findByIDFunc(ctx, id)
 	}
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockPostRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Post, error) {
+func (m *mockPostRepository) FindAll(ctx context.Context, limit, offset int) ([]*model.Post, error) {
 	if m.findAllFunc != nil {
 		return m.findAllFunc(ctx, limit, offset)
 	}
 	return nil, nil
 }
 
-func (m *mockPostRepository) Search(ctx context.Context, query string, limit, offset int) ([]*domain.Post, error) {
+func (m *mockPostRepository) Search(ctx context.Context, query string, limit, offset int) ([]*model.Post, error) {
 	if m.searchFunc != nil {
 		return m.searchFunc(ctx, query, limit, offset)
 	}
 	return nil, nil
 }
 
-func (m *mockPostRepository) Update(ctx context.Context, post *domain.Post) error {
+func (m *mockPostRepository) Update(ctx context.Context, post *model.Post) error {
 	if m.updateFunc != nil {
 		return m.updateFunc(ctx, post)
 	}
@@ -179,7 +179,7 @@ func TestGetPosts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &mockPostRepository{
-				findAllFunc: func(ctx context.Context, limit, offset int) ([]*domain.Post, error) {
+				findAllFunc: func(ctx context.Context, limit, offset int) ([]*model.Post, error) {
 					if limit != tt.expectedSize {
 						t.Errorf("FindAll() limit = %v, want %v", limit, tt.expectedSize)
 					}
@@ -187,7 +187,7 @@ func TestGetPosts(t *testing.T) {
 					if offset != expectedOffset {
 						t.Errorf("FindAll() offset = %v, want %v", offset, expectedOffset)
 					}
-					return []*domain.Post{}, nil
+					return []*model.Post{}, nil
 				},
 				countFunc: func(ctx context.Context) (int64, error) {
 					return 0, nil
@@ -204,7 +204,7 @@ func TestGetPosts(t *testing.T) {
 }
 
 func TestUpdatePost(t *testing.T) {
-	existingPost := domain.NewPost("Original Title", "Original Content")
+	existingPost := model.NewPost("Original Title", "Original Content")
 
 	tests := []struct {
 		name        string
@@ -242,7 +242,7 @@ func TestUpdatePost(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &mockPostRepository{
-				findByIDFunc: func(ctx context.Context, id string) (*domain.Post, error) {
+				findByIDFunc: func(ctx context.Context, id string) (*model.Post, error) {
 					return existingPost, nil
 				},
 			}
@@ -267,11 +267,11 @@ func TestUpdatePost(t *testing.T) {
 
 func TestSearchPosts(t *testing.T) {
 	repo := &mockPostRepository{
-		searchFunc: func(ctx context.Context, query string, limit, offset int) ([]*domain.Post, error) {
+		searchFunc: func(ctx context.Context, query string, limit, offset int) ([]*model.Post, error) {
 			if query != "test" {
 				t.Errorf("Search() query = %v, want test", query)
 			}
-			return []*domain.Post{}, nil
+			return []*model.Post{}, nil
 		},
 		countSearchFunc: func(ctx context.Context, query string) (int64, error) {
 			return 0, nil
