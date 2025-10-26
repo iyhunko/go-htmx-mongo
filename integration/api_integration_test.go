@@ -426,7 +426,7 @@ func TestIntegrationAPI_ShowEditForm(t *testing.T) {
 
 func TestIntegrationAPI_ShowPost(t *testing.T) {
 	t.Skip("Skipping test - post-detail.html template not implemented in the application")
-	
+
 	router, pool, resource, db := setupTestServer(t)
 	defer func() {
 		if err := pool.Purge(resource); err != nil {
