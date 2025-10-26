@@ -1,4 +1,4 @@
-package repository
+package integration
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/iyhunko/go-htmx-mongo/internal/model"
+	"github.com/iyhunko/go-htmx-mongo/internal/repository"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -84,7 +85,7 @@ func TestIntegrationMongoPostRepository_Create(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	post := model.NewPost("Test Title", "Test Content")
@@ -115,7 +116,7 @@ func TestIntegrationMongoPostRepository_FindByID(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create a post
@@ -151,12 +152,12 @@ func TestIntegrationMongoPostRepository_FindByID_NotFound(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	_, err := repo.FindByID(ctx, "507f1f77bcf86cd799439011")
-	if err != ErrPostNotFound {
-		t.Errorf("FindByID() error = %v, want %v", err, ErrPostNotFound)
+	if err != repository.ErrPostNotFound {
+		t.Errorf("FindByID() error = %v, want %v", err, repository.ErrPostNotFound)
 	}
 }
 
@@ -168,7 +169,7 @@ func TestIntegrationMongoPostRepository_FindAll(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create multiple posts
@@ -210,7 +211,7 @@ func TestIntegrationMongoPostRepository_Search(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create posts with different content
@@ -259,7 +260,7 @@ func TestIntegrationMongoPostRepository_Update(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create a post
@@ -297,7 +298,7 @@ func TestIntegrationMongoPostRepository_Delete(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create a post
@@ -313,7 +314,7 @@ func TestIntegrationMongoPostRepository_Delete(t *testing.T) {
 
 	// Verify deletion
 	_, err := repo.FindByID(ctx, post.ID.Hex())
-	if err != ErrPostNotFound {
+	if err != repository.ErrPostNotFound {
 		t.Errorf("Delete() post still exists")
 	}
 }
@@ -326,7 +327,7 @@ func TestIntegrationMongoPostRepository_Count(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create posts
@@ -355,7 +356,7 @@ func TestIntegrationMongoPostRepository_CountSearch(t *testing.T) {
 		}
 	}()
 
-	repo := NewMongoPostRepository(db)
+	repo := repository.NewMongoPostRepository(db)
 	ctx := context.Background()
 
 	// Create posts
