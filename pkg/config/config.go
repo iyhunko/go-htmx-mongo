@@ -38,7 +38,8 @@ func Load() *Config {
 func (c *Config) GetMongoURI() string {
 	var auth string
 	if c.MongoDBUser != "" && c.MongoDBPassword != "" {
-		auth = url.QueryEscape(c.MongoDBUser) + ":" + url.QueryEscape(c.MongoDBPassword) + "@"
+		userinfo := url.UserPassword(c.MongoDBUser, c.MongoDBPassword)
+		auth = userinfo.String() + "@"
 	}
 	return "mongodb://" + auth + c.MongoDBHost + ":" + c.MongoDBPort
 }
