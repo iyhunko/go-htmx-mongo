@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/iyhunko/go-htmx-mongo/internal/domain"
+	"github.com/iyhunko/go-htmx-mongo/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,13 +24,13 @@ type mongoPostRepository struct {
 
 // NewMongoPostRepository creates a new MongoDB post repository instance.
 // It initializes the repository with the posts collection from the provided database.
-func NewMongoPostRepository(db *mongo.Database) domain.PostRepository {
+func NewMongoPostRepository(db *mongo.Database) PostRepository {
 	return &mongoPostRepository{
 		collection: db.Collection("posts"),
 	}
 }
 
-func (r *mongoPostRepository) Create(ctx context.Context, post *domain.Post) error {
+func (r *mongoPostRepository) Create(ctx context.Context, post *model.Post) error {
 	post.ID = primitive.NewObjectID()
 	post.CreatedAt = time.Now()
 	post.UpdatedAt = time.Now()
@@ -39,13 +39,13 @@ func (r *mongoPostRepository) Create(ctx context.Context, post *domain.Post) err
 	return err
 }
 
-func (r *mongoPostRepository) FindByID(ctx context.Context, id string) (*domain.Post, error) {
+func (r *mongoPostRepository) FindByID(ctx context.Context, id string) (*model.Post, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, ErrInvalidID
 	}
 
-	var post domain.Post
+	var post model.Post
 	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&post)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -57,7 +57,7 @@ func (r *mongoPostRepository) FindByID(ctx context.Context, id string) (*domain.
 	return &post, nil
 }
 
-func (r *mongoPostRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Post, error) {
+func (r *mongoPostRepository) FindAll(ctx context.Context, limit, offset int) ([]*model.Post, error) {
 	opts := options.Find().
 		SetLimit(int64(limit)).
 		SetSkip(int64(offset)).
@@ -69,7 +69,7 @@ func (r *mongoPostRepository) FindAll(ctx context.Context, limit, offset int) ([
 	}
 	defer cursor.Close(ctx)
 
-	var posts []*domain.Post
+	var posts []*model.Post
 	if err := cursor.All(ctx, &posts); err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (r *mongoPostRepository) FindAll(ctx context.Context, limit, offset int) ([
 	return posts, nil
 }
 
-func (r *mongoPostRepository) Search(ctx context.Context, query string, limit, offset int) ([]*domain.Post, error) {
+func (r *mongoPostRepository) Search(ctx context.Context, query string, limit, offset int) ([]*model.Post, error) {
 	// Escape special regex characters to prevent regex injection
 	escapedQuery := regexp.QuoteMeta(query)
 
@@ -99,7 +99,7 @@ func (r *mongoPostRepository) Search(ctx context.Context, query string, limit, o
 	}
 	defer cursor.Close(ctx)
 
-	var posts []*domain.Post
+	var posts []*model.Post
 	if err := cursor.All(ctx, &posts); err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (r *mongoPostRepository) Search(ctx context.Context, query string, limit, o
 	return posts, nil
 }
 
-func (r *mongoPostRepository) Update(ctx context.Context, post *domain.Post) error {
+func (r *mongoPostRepository) Update(ctx context.Context, post *model.Post) error {
 	post.UpdatedAt = time.Now()
 
 	update := bson.M{

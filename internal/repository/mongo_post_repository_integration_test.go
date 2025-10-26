@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iyhunko/go-htmx-mongo/internal/domain"
+	"github.com/iyhunko/go-htmx-mongo/internal/model"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -87,7 +87,7 @@ func TestIntegrationMongoPostRepository_Create(t *testing.T) {
 	repo := NewMongoPostRepository(db)
 	ctx := context.Background()
 
-	post := domain.NewPost("Test Title", "Test Content")
+	post := model.NewPost("Test Title", "Test Content")
 
 	err := repo.Create(ctx, post)
 	if err != nil {
@@ -119,7 +119,7 @@ func TestIntegrationMongoPostRepository_FindByID(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a post
-	post := domain.NewPost("Test Title", "Test Content")
+	post := model.NewPost("Test Title", "Test Content")
 	if err := repo.Create(ctx, post); err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
@@ -173,7 +173,7 @@ func TestIntegrationMongoPostRepository_FindAll(t *testing.T) {
 
 	// Create multiple posts
 	for i := 1; i <= 15; i++ {
-		post := domain.NewPost(fmt.Sprintf("Title %d", i), fmt.Sprintf("Content %d", i))
+		post := model.NewPost(fmt.Sprintf("Title %d", i), fmt.Sprintf("Content %d", i))
 		if err := repo.Create(ctx, post); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}
@@ -224,7 +224,7 @@ func TestIntegrationMongoPostRepository_Search(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		post := domain.NewPost(tc.title, tc.content)
+		post := model.NewPost(tc.title, tc.content)
 		if err := repo.Create(ctx, post); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}
@@ -263,7 +263,7 @@ func TestIntegrationMongoPostRepository_Update(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a post
-	post := domain.NewPost("Original Title", "Original Content")
+	post := model.NewPost("Original Title", "Original Content")
 	if err := repo.Create(ctx, post); err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
@@ -301,7 +301,7 @@ func TestIntegrationMongoPostRepository_Delete(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a post
-	post := domain.NewPost("Test Title", "Test Content")
+	post := model.NewPost("Test Title", "Test Content")
 	if err := repo.Create(ctx, post); err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
@@ -331,7 +331,7 @@ func TestIntegrationMongoPostRepository_Count(t *testing.T) {
 
 	// Create posts
 	for i := 1; i <= 5; i++ {
-		post := domain.NewPost(fmt.Sprintf("Title %d", i), fmt.Sprintf("Content %d", i))
+		post := model.NewPost(fmt.Sprintf("Title %d", i), fmt.Sprintf("Content %d", i))
 		if err := repo.Create(ctx, post); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}
@@ -369,7 +369,7 @@ func TestIntegrationMongoPostRepository_CountSearch(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		post := domain.NewPost(tc.title, tc.content)
+		post := model.NewPost(tc.title, tc.content)
 		if err := repo.Create(ctx, post); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}

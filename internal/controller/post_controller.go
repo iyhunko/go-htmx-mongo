@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/iyhunko/go-htmx-mongo/internal/domain"
+	"github.com/iyhunko/go-htmx-mongo/internal/model"
 	"github.com/iyhunko/go-htmx-mongo/internal/service"
 	"github.com/iyhunko/go-htmx-mongo/pkg/config"
 )
@@ -40,7 +40,7 @@ func (c *PostController) Index(ctx *gin.Context) {
 	search := ctx.Query("search")
 	pageSize := c.config.PageSizeLimit
 
-	var posts []*domain.Post
+	var posts []*model.Post
 	var totalPages int
 	var err error
 
@@ -81,7 +81,7 @@ func (c *PostController) PostsList(ctx *gin.Context) {
 	search := ctx.Query("search")
 	pageSize := c.config.PageSizeLimit
 
-	var posts []*domain.Post
+	var posts []*model.Post
 	var totalPages int
 	var err error
 
