@@ -1,0 +1,14 @@
+Add these improvements:
+- Add database user/password to MongoDB config
+- Add “HttpServerHost” to Config
+- Add “HttpServerPort” to Config
+- Add MongoDBHost to Config
+- Add MongoDBPort to Config
+- Add MongoDBDatabase to Config
+- Add “http/middleware” folder and put there all middlewares for HTTP server
+- Rename mongo_post_repository.go to post_repository.go
+- Add PageSizeLimit to Config and set default pagination page size value to 100;
+- Fix bug: “POST /posts” is executed every time I focus on “title” or “content” field (on the “/posts/new” page).
+- Fix bug: edit form is closed when I focus/click on the “title” or “content” fields (on the “/posts/edit” page).
+- Use “DELETE posts/{id}” URL instead of “DELETE /posts?id={}" for the post delete endpoint.
+- Fix bug: post item is not removed from the list after successful post delete operation (on the “posts” page).
