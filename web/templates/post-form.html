@@ -3,14 +3,14 @@
 {{end}}
 
 {{if eq .Mode "create"}}
-<form hx-post="/posts" hx-target="#posts-table-body" hx-swap="afterbegin">
+<form hx-post="/posts" hx-target="#posts-table-body" hx-swap="afterbegin" novalidate>
     <div class="form-group">
         <label for="title">Title *</label>
-        <input type="text" id="title" name="title" required maxlength="200" value="{{.Title}}">
+        <input type="text" id="title" name="title" maxlength="200" value="{{.Title}}">
     </div>
     <div class="form-group">
         <label for="content">Content *</label>
-        <textarea id="content" name="content" required maxlength="10000">{{.Content}}</textarea>
+        <textarea id="content" name="content" maxlength="10000">{{.Content}}</textarea>
     </div>
     <div style="display: flex; gap: 1rem;">
         <button type="submit" class="btn btn-success">Create Post</button>
@@ -25,18 +25,18 @@
 {{else if eq .Mode "edit"}}
 <tr id="post-{{.Post.ID.Hex}}">
     <td colspan="4">
-        <form hx-put="/posts" hx-target="#post-{{.Post.ID.Hex}}" hx-swap="outerHTML">
+        <form hx-put="/posts" hx-target="#post-{{.Post.ID.Hex}}" hx-swap="outerHTML" novalidate>
             <input type="hidden" name="id" value="{{.Post.ID.Hex}}">
             {{if .Error}}
             <div class="error">{{.Error}}</div>
             {{end}}
             <div class="form-group">
                 <label for="title">Title *</label>
-                <input type="text" id="title" name="title" required maxlength="200" value="{{if .Title}}{{.Title}}{{else}}{{.Post.Title}}{{end}}">
+                <input type="text" id="title" name="title" maxlength="200" value="{{if .Title}}{{.Title}}{{else}}{{.Post.Title}}{{end}}">
             </div>
             <div class="form-group">
                 <label for="content">Content *</label>
-                <textarea id="content" name="content" required maxlength="10000">{{if .Content}}{{.Content}}{{else}}{{.Post.Content}}{{end}}</textarea>
+                <textarea id="content" name="content" maxlength="10000">{{if .Content}}{{.Content}}{{else}}{{.Post.Content}}{{end}}</textarea>
             </div>
             <div style="display: flex; gap: 1rem;">
                 <button type="submit" class="btn btn-success">Save</button>

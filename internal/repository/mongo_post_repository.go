@@ -21,7 +21,8 @@ type mongoPostRepository struct {
 	collection *mongo.Collection
 }
 
-// NewMongoPostRepository creates a new MongoDB post repository
+// NewMongoPostRepository creates a new MongoDB post repository instance.
+// It initializes the repository with the posts collection from the provided database.
 func NewMongoPostRepository(db *mongo.Database) domain.PostRepository {
 	return &mongoPostRepository{
 		collection: db.Collection("posts"),

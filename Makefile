@@ -48,14 +48,13 @@ tidy: ## Tidy go modules
 	@echo "Tidying go modules..."
 	@go mod tidy
 
-docker-up: ## Start MongoDB in Docker
-	@echo "Starting MongoDB..."
-	@docker run -d --name mongo-news -p 27017:27017 mongo:7
+docker-up: ## Start MongoDB and app using docker-compose
+	@echo "Starting services with docker-compose..."
+	@docker-compose up -d
 
-docker-down: ## Stop MongoDB Docker container
-	@echo "Stopping MongoDB..."
-	@docker stop mongo-news || true
-	@docker rm mongo-news || true
+docker-down: ## Stop docker-compose services
+	@echo "Stopping services..."
+	@docker-compose down
 
 clean: ## Clean build artifacts
 	@echo "Cleaning..."
