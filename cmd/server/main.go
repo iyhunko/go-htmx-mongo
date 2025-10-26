@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	httproutes "github.com/iyhunko/go-htmx-mongo/http"
+	"github.com/iyhunko/go-htmx-mongo/http/middleware"
 	"github.com/iyhunko/go-htmx-mongo/internal/controller"
 	"github.com/iyhunko/go-htmx-mongo/internal/db"
 	"github.com/iyhunko/go-htmx-mongo/internal/repository"
@@ -30,13 +31,13 @@ func main() {
 
 	// Load configuration
 	cfg := config.Load()
-	slog.Info("Configuration loaded", "serverPort", cfg.ServerPort, "database", cfg.MongoDB)
+	slog.Info("Configuration loaded", "serverPort", cfg.HttpServerPort, "database", cfg.MongoDBDatabase)
 
 	// Connect to MongoDB with auto-migration
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	mongodb, err := db.Connect(ctx, cfg.MongoURI, cfg.MongoDB)
+	mongodb, err := db.Connect(ctx, cfg.GetMongoURI(), cfg.MongoDBDatabase)
 	if err != nil {
 		slog.Error("Failed to connect to database", "error", err)
 		os.Exit(1)
@@ -59,35 +60,20 @@ func main() {
 	}
 	slog.Info("Templates loaded successfully")
 
-	postController := controller.NewPostController(postService, templates)
+	postController := controller.NewPostController(postService, templates, cfg.PageSizeLimit)
 
 	// Setup Gin router
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
-
-	// Custom logger middleware
-	router.Use(func(c *gin.Context) {
-		start := time.Now()
-		path := c.Request.URL.Path
-
-		c.Next()
-
-		duration := time.Since(start)
-		slog.Info("Request processed",
-			"method", c.Request.Method,
-			"path", path,
-			"status", c.Writer.Status(),
-			"duration", duration.String(),
-		)
-	})
+	router.Use(middleware.Logger())
 
 	// Setup routes
 	httproutes.SetupRoutes(router, postController)
 
 	// Create server
 	server := &http.Server{
-		Addr:         ":" + cfg.ServerPort,
+		Addr:         cfg.GetServerAddress(),
 		Handler:      router,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -96,7 +82,7 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		slog.Info("Server starting", "port", cfg.ServerPort)
+		slog.Info("Server starting", "port", cfg.HttpServerPort)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("Failed to start server", "error", err)
 			os.Exit(1)

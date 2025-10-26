@@ -7,9 +7,14 @@ import (
 
 // Config holds application configuration
 type Config struct {
-	MongoURI   string
-	MongoDB    string
-	ServerPort string
+	HttpServerHost  string
+	HttpServerPort  string
+	MongoDBHost     string
+	MongoDBPort     string
+	MongoDBDatabase string
+	MongoDBUser     string
+	MongoDBPassword string
+	PageSizeLimit   int
 }
 
 // Load loads configuration from environment variables
@@ -17,10 +22,29 @@ type Config struct {
 // or default values if environment variables are not set.
 func Load() *Config {
 	return &Config{
-		MongoURI:   getEnv("MONGO_URI", "mongodb://localhost:27017"),
-		MongoDB:    getEnv("MONGO_DB", "newsdb"),
-		ServerPort: getEnv("SERVER_PORT", "8080"),
+		HttpServerHost:  getEnv("HTTP_SERVER_HOST", ""),
+		HttpServerPort:  getEnv("HTTP_SERVER_PORT", "8080"),
+		MongoDBHost:     getEnv("MONGODB_HOST", "localhost"),
+		MongoDBPort:     getEnv("MONGODB_PORT", "27017"),
+		MongoDBDatabase: getEnv("MONGODB_DATABASE", "newsdb"),
+		MongoDBUser:     getEnv("MONGODB_USER", ""),
+		MongoDBPassword: getEnv("MONGODB_PASSWORD", ""),
+		PageSizeLimit:   getEnvAsInt("PAGE_SIZE_LIMIT", 100),
 	}
+}
+
+// GetMongoURI constructs the MongoDB connection URI from config values
+func (c *Config) GetMongoURI() string {
+	var auth string
+	if c.MongoDBUser != "" && c.MongoDBPassword != "" {
+		auth = c.MongoDBUser + ":" + c.MongoDBPassword + "@"
+	}
+	return "mongodb://" + auth + c.MongoDBHost + ":" + c.MongoDBPort
+}
+
+// GetServerAddress constructs the HTTP server address from config values
+func (c *Config) GetServerAddress() string {
+	return c.HttpServerHost + ":" + c.HttpServerPort
 }
 
 func getEnv(key, defaultValue string) string {
