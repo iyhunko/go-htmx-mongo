@@ -25,7 +25,9 @@ func NewPostService(repo domain.PostRepository) *PostService {
 	}
 }
 
-// CreatePost creates a new post
+// CreatePost creates a new post with the provided title and content.
+// It validates the post before saving it to the repository.
+// Returns the created post or an error if validation or creation fails.
 func (s *PostService) CreatePost(ctx context.Context, title, content string) (*domain.Post, error) {
 	post := domain.NewPost(title, content)
 
@@ -40,7 +42,8 @@ func (s *PostService) CreatePost(ctx context.Context, title, content string) (*d
 	return post, nil
 }
 
-// GetPost retrieves a post by ID
+// GetPost retrieves a post by its ID.
+// Returns the post if found, or an error if the post doesn't exist or the ID is invalid.
 func (s *PostService) GetPost(ctx context.Context, id string) (*domain.Post, error) {
 	post, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -49,7 +52,10 @@ func (s *PostService) GetPost(ctx context.Context, id string) (*domain.Post, err
 	return post, nil
 }
 
-// GetPosts retrieves paginated posts
+// GetPosts retrieves paginated posts.
+// It returns posts for the requested page, the total number of pages, and an error if any.
+// Page numbers start at 1, and invalid values are adjusted to defaults (page=1, pageSize=10).
+// Maximum page size is capped at 100.
 func (s *PostService) GetPosts(ctx context.Context, page, pageSize int) ([]*domain.Post, int, error) {
 	if page < 1 {
 		page = 1
@@ -81,7 +87,10 @@ func (s *PostService) GetPosts(ctx context.Context, page, pageSize int) ([]*doma
 	return posts, totalPages, nil
 }
 
-// SearchPosts searches posts by query
+// SearchPosts searches posts by query string in title and content.
+// It returns matching posts for the requested page, the total number of pages, and an error if any.
+// Page numbers start at 1, and invalid values are adjusted to defaults (page=1, pageSize=10).
+// Maximum page size is capped at 100.
 func (s *PostService) SearchPosts(ctx context.Context, query string, page, pageSize int) ([]*domain.Post, int, error) {
 	if page < 1 {
 		page = 1
@@ -113,7 +122,9 @@ func (s *PostService) SearchPosts(ctx context.Context, query string, page, pageS
 	return posts, totalPages, nil
 }
 
-// UpdatePost updates an existing post
+// UpdatePost updates an existing post with new title and content.
+// It retrieves the post, updates it, validates it, and saves it back to the repository.
+// Returns the updated post or an error if the post is not found or validation fails.
 func (s *PostService) UpdatePost(ctx context.Context, id, title, content string) (*domain.Post, error) {
 	post, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -133,7 +144,8 @@ func (s *PostService) UpdatePost(ctx context.Context, id, title, content string)
 	return post, nil
 }
 
-// DeletePost deletes a post
+// DeletePost deletes a post by its ID.
+// Returns an error if the post is not found or deletion fails.
 func (s *PostService) DeletePost(ctx context.Context, id string) error {
 	return s.repo.Delete(ctx, id)
 }

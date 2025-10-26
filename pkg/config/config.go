@@ -13,6 +13,8 @@ type Config struct {
 }
 
 // Load loads configuration from environment variables
+// It returns a Config struct populated with values from environment variables
+// or default values if environment variables are not set.
 func Load() *Config {
 	return &Config{
 		MongoURI:   getEnv("MONGO_URI", "mongodb://localhost:27017"),

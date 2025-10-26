@@ -2,100 +2,93 @@ package main
 
 import (
 	"context"
-	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/iyhunko/go-htmx-mongo/internal/handler"
+	"github.com/gin-gonic/gin"
+	httproutes "github.com/iyhunko/go-htmx-mongo/http"
+	"github.com/iyhunko/go-htmx-mongo/internal/controller"
+	"github.com/iyhunko/go-htmx-mongo/internal/db"
 	"github.com/iyhunko/go-htmx-mongo/internal/repository"
 	"github.com/iyhunko/go-htmx-mongo/internal/service"
 	"github.com/iyhunko/go-htmx-mongo/pkg/config"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/iyhunko/go-htmx-mongo/web"
 )
 
 func main() {
+	// Initialize structured logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
+	slog.Info("Starting application")
+
 	// Load configuration
 	cfg := config.Load()
+	slog.Info("Configuration loaded", "serverPort", cfg.ServerPort, "database", cfg.MongoDB)
 
-	// Connect to MongoDB
+	// Connect to MongoDB with auto-migration
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoURI))
+	mongodb, err := db.Connect(ctx, cfg.MongoURI, cfg.MongoDB)
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		slog.Error("Failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 	defer func() {
-		if err := client.Disconnect(context.Background()); err != nil {
-			log.Printf("Error disconnecting from MongoDB: %v", err)
+		if err := mongodb.Disconnect(context.Background()); err != nil {
+			slog.Error("Error disconnecting from MongoDB", "error", err)
 		}
 	}()
 
-	// Ping MongoDB to verify connection
-	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatalf("Failed to ping MongoDB: %v", err)
-	}
-	log.Println("Successfully connected to MongoDB")
-
-	db := client.Database(cfg.MongoDB)
-
 	// Initialize layers
-	postRepo := repository.NewMongoPostRepository(db)
+	postRepo := repository.NewMongoPostRepository(mongodb.DB)
 	postService := service.NewPostService(postRepo)
 
 	// Load templates with custom functions
-	funcMap := template.FuncMap{
-		"add": func(a, b int) int { return a + b },
-		"sub": func(a, b int) int { return a - b },
-		"dict": func(values ...interface{}) map[string]interface{} {
-			dict := make(map[string]interface{})
-			for i := 0; i < len(values); i += 2 {
-				key := values[i].(string)
-				dict[key] = values[i+1]
-			}
-			return dict
-		},
+	templates, err := web.LoadTemplates()
+	if err != nil {
+		slog.Error("Failed to load templates", "error", err)
+		os.Exit(1)
 	}
+	slog.Info("Templates loaded successfully")
 
-	templates := template.Must(template.New("").Funcs(funcMap).ParseGlob("web/templates/*.html"))
+	postController := controller.NewPostController(postService, templates)
 
-	postHandler := handler.NewPostHandler(postService, templates)
+	// Setup Gin router
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	router.Use(gin.Recovery())
+
+	// Custom logger middleware
+	router.Use(func(c *gin.Context) {
+		start := time.Now()
+		path := c.Request.URL.Path
+
+		c.Next()
+
+		duration := time.Since(start)
+		slog.Info("Request processed",
+			"method", c.Request.Method,
+			"path", path,
+			"status", c.Writer.Status(),
+			"duration", duration.String(),
+		)
+	})
 
 	// Setup routes
-	mux := http.NewServeMux()
-	
-	// Serve static files
-	fs := http.FileServer(http.Dir("web/static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-	
-	mux.HandleFunc("/", postHandler.Index)
-	mux.HandleFunc("/posts", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			postHandler.PostsList(w, r)
-		case http.MethodPost:
-			postHandler.CreatePost(w, r)
-		case http.MethodPut:
-			postHandler.UpdatePost(w, r)
-		case http.MethodDelete:
-			postHandler.DeletePost(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
-	mux.HandleFunc("/posts/new", postHandler.ShowCreateForm)
-	mux.HandleFunc("/posts/edit", postHandler.ShowEditForm)
-	mux.HandleFunc("/posts/view", postHandler.ShowPost)
+	httproutes.SetupRoutes(router, postController)
 
 	// Create server
 	server := &http.Server{
 		Addr:         ":" + cfg.ServerPort,
-		Handler:      mux,
+		Handler:      router,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -103,9 +96,10 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		log.Printf("Server starting on port %s", cfg.ServerPort)
+		slog.Info("Server starting", "port", cfg.ServerPort)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+			slog.Error("Failed to start server", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -113,15 +107,16 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutting down server...")
+	slog.Info("Shutting down server...")
 
 	// Graceful shutdown with timeout
 	ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		slog.Error("Server forced to shutdown", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("Server stopped")
+	slog.Info("Server stopped gracefully")
 }

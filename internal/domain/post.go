@@ -17,7 +17,9 @@ type Post struct {
 	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
 }
 
-// Validate validates post fields
+// Validate validates post fields.
+// It checks that title and content are not empty and within length limits.
+// Returns an error describing the validation failure, or nil if validation passes.
 func (p *Post) Validate() error {
 	if strings.TrimSpace(p.Title) == "" {
 		return errors.New("title is required")
@@ -34,7 +36,8 @@ func (p *Post) Validate() error {
 	return nil
 }
 
-// NewPost creates a new post with timestamps
+// NewPost creates a new post with timestamps.
+// It trims whitespace from title and content and sets CreatedAt and UpdatedAt to current time.
 func NewPost(title, content string) *Post {
 	now := time.Now()
 	return &Post{
@@ -45,7 +48,8 @@ func NewPost(title, content string) *Post {
 	}
 }
 
-// Update updates the post content and timestamp
+// Update updates the post content and timestamp.
+// It trims whitespace from title and content and updates UpdatedAt to current time.
 func (p *Post) Update(title, content string) {
 	p.Title = strings.TrimSpace(title)
 	p.Content = strings.TrimSpace(content)
