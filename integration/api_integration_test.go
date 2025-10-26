@@ -7,95 +7,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/iyhunko/go-htmx-mongo/internal/controller"
-	httproutes "github.com/iyhunko/go-htmx-mongo/internal/http"
 	"github.com/iyhunko/go-htmx-mongo/internal/model"
 	"github.com/iyhunko/go-htmx-mongo/internal/repository"
-	"github.com/iyhunko/go-htmx-mongo/internal/service"
-	"github.com/iyhunko/go-htmx-mongo/pkg/config"
-	"github.com/iyhunko/go-htmx-mongo/web"
-	"github.com/ory/dockertest/v3"
-	"go.mongodb.org/mongo-driver/mongo"
 )
-
-// findProjectRoot finds the project root directory
-func findProjectRoot() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	// Walk up the directory tree to find go.mod
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir, nil
-		}
-
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-
-	return "", fmt.Errorf("could not find project root")
-}
-
-// setupTestServer creates a test HTTP server with all dependencies
-func setupTestServer(t *testing.T) (*gin.Engine, *dockertest.Pool, *dockertest.Resource, *mongo.Database) {
-	// Skip if in short mode
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
-
-	// Change to project root for template loading
-	projectRoot, err := findProjectRoot()
-	if err != nil {
-		t.Fatalf("Failed to find project root: %v", err)
-	}
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get current directory: %v", err)
-	}
-	if err := os.Chdir(projectRoot); err != nil {
-		t.Fatalf("Failed to change to project root: %v", err)
-	}
-	defer os.Chdir(originalDir)
-
-	// Setup MongoDB
-	pool, resource, db := setupMongoDB(t)
-
-	// Initialize application layers
-	postRepo := repository.NewMongoPostRepository(db)
-	postService := service.NewPostService(postRepo)
-
-	// Load templates
-	templates, err := web.LoadTemplates()
-	if err != nil {
-		t.Fatalf("Failed to load templates: %v", err)
-	}
-
-	// Create config
-	cfg := &config.Config{
-		PageSizeLimit: 10,
-	}
-
-	postController := controller.NewPostController(postService, templates, cfg)
-
-	// Setup router
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	httproutes.SetupRoutes(router, postController)
-
-	return router, pool, resource, db
-}
 
 func TestIntegrationAPI_Index(t *testing.T) {
 	router, pool, resource, _ := setupTestServer(t)

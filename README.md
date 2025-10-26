@@ -29,6 +29,10 @@ A modern web application for managing news articles, built with Go, HTMX for dyn
 .
 ├── cmd/
 │   └── server/          # Application entry point
+├── integration/
+│   ├── helper.go        # Integration test helper functions
+│   ├── api_integration_test.go      # API integration tests
+│   └── repository_integration_test.go  # Repository integration tests
 ├── http/
 │   └── routes.go        # HTTP route definitions
 ├── internal/
