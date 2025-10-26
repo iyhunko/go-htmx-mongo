@@ -31,7 +31,7 @@ func main() {
 	mongodb := connectDatabase(cfg)
 	defer disconnectDatabase(mongodb)
 
-	postController := initializeApplication(mongodb, cfg)
+	postController := initializeController(mongodb, cfg)
 	router := setupRouter(postController)
 	server := createServer(cfg, router)
 
@@ -67,8 +67,8 @@ func disconnectDatabase(mongodb *db.MongoDB) {
 	}
 }
 
-// initializeApplication initializes all application layers
-func initializeApplication(mongodb *db.MongoDB, cfg *config.Config) *controller.PostController {
+// initializeController initializes all application layers
+func initializeController(mongodb *db.MongoDB, cfg *config.Config) *controller.PostController {
 	postRepo := repository.NewMongoPostRepository(mongodb.DB)
 	postService := service.NewPostService(postRepo)
 
