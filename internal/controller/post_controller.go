@@ -9,21 +9,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/iyhunko/go-htmx-mongo/internal/domain"
 	"github.com/iyhunko/go-htmx-mongo/internal/service"
+	"github.com/iyhunko/go-htmx-mongo/pkg/config"
 )
 
 // PostController handles HTTP requests for posts
 type PostController struct {
-	service       *service.PostService
-	templates     *template.Template
-	pageSizeLimit int
+	service   *service.PostService
+	templates *template.Template
+	config    *config.Config
 }
 
 // NewPostController creates a new post controller
-func NewPostController(service *service.PostService, templates *template.Template, pageSizeLimit int) *PostController {
+func NewPostController(service *service.PostService, templates *template.Template, cfg *config.Config) *PostController {
 	return &PostController{
-		service:       service,
-		templates:     templates,
-		pageSizeLimit: pageSizeLimit,
+		service:   service,
+		templates: templates,
+		config:    cfg,
 	}
 }
 
@@ -37,7 +38,7 @@ func (c *PostController) Index(ctx *gin.Context) {
 	}
 
 	search := ctx.Query("search")
-	pageSize := c.pageSizeLimit
+	pageSize := c.config.PageSizeLimit
 
 	var posts []*domain.Post
 	var totalPages int
@@ -78,7 +79,7 @@ func (c *PostController) PostsList(ctx *gin.Context) {
 	}
 
 	search := ctx.Query("search")
-	pageSize := c.pageSizeLimit
+	pageSize := c.config.PageSizeLimit
 
 	var posts []*domain.Post
 	var totalPages int
@@ -208,7 +209,7 @@ func (c *PostController) ShowEditForm(ctx *gin.Context) {
 
 // UpdatePost handles post update
 func (c *PostController) UpdatePost(ctx *gin.Context) {
-	id := ctx.PostForm("id")
+	id := ctx.Param("id")
 	title := ctx.PostForm("title")
 	content := ctx.PostForm("content")
 
