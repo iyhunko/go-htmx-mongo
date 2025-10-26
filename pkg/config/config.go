@@ -30,7 +30,7 @@ func Load() *Config {
 		MongoDBDatabase: getEnv("MONGODB_DATABASE", "newsdb"),
 		MongoDBUser:     getEnv("MONGODB_USER", ""),
 		MongoDBPassword: getEnv("MONGODB_PASSWORD", ""),
-		PageSizeLimit:   getEnvAsInt("PAGE_SIZE_LIMIT", 100),
+		PageSizeLimit:   getEnvAsInt("PAGE_SIZE_LIMIT", 10),
 	}
 }
 

@@ -31,8 +31,7 @@
 {{else if eq .Mode "edit"}}
 <tr id="post-{{.Post.ID.Hex}}">
     <td colspan="4">
-        <form hx-put="/posts" hx-target="#post-{{.Post.ID.Hex}}" hx-swap="outerHTML" hx-trigger="submit" novalidate>
-            <input type="hidden" name="id" value="{{.Post.ID.Hex}}">
+        <form hx-put="/posts/{{.Post.ID.Hex}}" hx-target="#post-{{.Post.ID.Hex}}" hx-swap="outerHTML" hx-trigger="submit" novalidate>
             {{if .Error}}
             <div class="error">{{.Error}}</div>
             {{end}}

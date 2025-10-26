@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	httproutes "github.com/iyhunko/go-htmx-mongo/http"
-	"github.com/iyhunko/go-htmx-mongo/http/middleware"
 	"github.com/iyhunko/go-htmx-mongo/internal/controller"
 	"github.com/iyhunko/go-htmx-mongo/internal/db"
+	httproutes "github.com/iyhunko/go-htmx-mongo/internal/http"
+	"github.com/iyhunko/go-htmx-mongo/internal/http/middleware"
 	"github.com/iyhunko/go-htmx-mongo/internal/repository"
 	"github.com/iyhunko/go-htmx-mongo/internal/service"
 	"github.com/iyhunko/go-htmx-mongo/pkg/config"
@@ -60,7 +60,7 @@ func main() {
 	}
 	slog.Info("Templates loaded successfully")
 
-	postController := controller.NewPostController(postService, templates, cfg.PageSizeLimit)
+	postController := controller.NewPostController(postService, templates, cfg)
 
 	// Setup Gin router
 	gin.SetMode(gin.ReleaseMode)

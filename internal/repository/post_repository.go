@@ -80,7 +80,7 @@ func (r *mongoPostRepository) FindAll(ctx context.Context, limit, offset int) ([
 func (r *mongoPostRepository) Search(ctx context.Context, query string, limit, offset int) ([]*domain.Post, error) {
 	// Escape special regex characters to prevent regex injection
 	escapedQuery := regexp.QuoteMeta(query)
-	
+
 	filter := bson.M{
 		"$or": []bson.M{
 			{"title": bson.M{"$regex": escapedQuery, "$options": "i"}},
@@ -155,7 +155,7 @@ func (r *mongoPostRepository) Count(ctx context.Context) (int64, error) {
 func (r *mongoPostRepository) CountSearch(ctx context.Context, query string) (int64, error) {
 	// Escape special regex characters to prevent regex injection
 	escapedQuery := regexp.QuoteMeta(query)
-	
+
 	filter := bson.M{
 		"$or": []bson.M{
 			{"title": bson.M{"$regex": escapedQuery, "$options": "i"}},
