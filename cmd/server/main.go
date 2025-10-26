@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	httproutes "github.com/iyhunko/go-htmx-mongo/http"
 	"github.com/iyhunko/go-htmx-mongo/internal/controller"
 	"github.com/iyhunko/go-htmx-mongo/internal/db"
 	"github.com/iyhunko/go-htmx-mongo/internal/repository"
 	"github.com/iyhunko/go-htmx-mongo/internal/service"
 	"github.com/iyhunko/go-htmx-mongo/pkg/config"
 	"github.com/iyhunko/go-htmx-mongo/web"
-	httproutes "github.com/iyhunko/go-htmx-mongo/http"
 )
 
 func main() {
@@ -65,14 +65,14 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
-	
+
 	// Custom logger middleware
 	router.Use(func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
-		
+
 		c.Next()
-		
+
 		duration := time.Since(start)
 		slog.Info("Request processed",
 			"method", c.Request.Method,
