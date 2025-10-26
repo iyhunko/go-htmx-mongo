@@ -1,0 +1,55 @@
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Content</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="posts-table-body">
+        {{if .Posts}}
+            {{range .Posts}}
+                {{template "post-row.html" (dict "Post" .)}}
+            {{end}}
+        {{else}}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 2rem; color: #a0aec0;">
+                    {{if .Search}}
+                        No posts found matching "{{.Search}}"
+                    {{else}}
+                        No posts yet. Create your first post!
+                    {{end}}
+                </td>
+            </tr>
+        {{end}}
+    </tbody>
+</table>
+
+{{if gt .TotalPages 1}}
+<div class="pagination">
+    {{if gt .CurrentPage 1}}
+        <button 
+            class="btn btn-secondary" 
+            hx-get="/posts?page={{sub .CurrentPage 1}}{{if .Search}}&search={{.Search}}{{end}}" 
+            hx-target="#posts-container"
+            hx-swap="innerHTML">
+            ← Previous
+        </button>
+    {{end}}
+    
+    <span style="padding: 0.5rem 1rem; align-self: center;">
+        Page {{.CurrentPage}} of {{.TotalPages}}
+    </span>
+    
+    {{if lt .CurrentPage .TotalPages}}
+        <button 
+            class="btn btn-secondary" 
+            hx-get="/posts?page={{add .CurrentPage 1}}{{if .Search}}&search={{.Search}}{{end}}" 
+            hx-target="#posts-container"
+            hx-swap="innerHTML">
+            Next →
+        </button>
+    {{end}}
+</div>
+{{end}}
