@@ -9,73 +9,10 @@ import (
 
 	"github.com/iyhunko/go-htmx-mongo/internal/model"
 	"github.com/iyhunko/go-htmx-mongo/internal/repository"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var testDB *mongo.Database
-
-func setupMongoDB(t *testing.T) (*dockertest.Pool, *dockertest.Resource, *mongo.Database) {
-	// Skip if in short mode
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
-
-	// Create dockertest pool
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		t.Fatalf("Could not construct pool: %s", err)
-	}
-
-	// Set max wait time
-	pool.MaxWait = 120 * time.Second
-
-	// Pull mongodb image
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "mongo",
-		Tag:        "7",
-		Env: []string{
-			"MONGO_INITDB_DATABASE=testdb",
-		},
-	}, func(config *docker.HostConfig) {
-		config.AutoRemove = true
-		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
-	})
-	if err != nil {
-		t.Fatalf("Could not start resource: %s", err)
-	}
-
-	var client *mongo.Client
-	var db *mongo.Database
-
-	// Exponential backoff-retry
-	if err := pool.Retry(func() error {
-		var err error
-		mongoURI := fmt.Sprintf("mongodb://localhost:%s", resource.GetPort("27017/tcp"))
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		client, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
-		if err != nil {
-			return err
-		}
-
-		// Ping the database
-		if err := client.Ping(ctx, nil); err != nil {
-			return err
-		}
-
-		db = client.Database("testdb")
-		return nil
-	}); err != nil {
-		t.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	return pool, resource, db
-}
 
 func TestIntegrationMongoPostRepository_Create(t *testing.T) {
 	pool, resource, db := setupMongoDB(t)
